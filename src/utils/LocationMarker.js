@@ -1,8 +1,8 @@
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 import { Style, Icon } from "ol/style";
-import { Vector as VectorSource } from 'ol/source';
-import { Vector as VectorLayer } from 'ol/layer';
+import { Vector as VectorSource } from "ol/source";
+import { Vector as VectorLayer } from "ol/layer";
 
 export const pinpoint = (map, coords) => {
     if (!map) return; // Ensure the map instance is available
@@ -13,10 +13,10 @@ export const pinpoint = (map, coords) => {
 
     const markerStyle = new Style({
         image: new Icon({
-            anchor: [0.5, 46],
+            anchor: [0.5, 0.5],
             anchorXUnits: "fraction",
-            anchorYUnits: "pixels",
-            src: "https://openlayers.org/en/latest/examples/data/icon.png", // Example marker icon
+            anchorYUnits: "fraction",
+            src: "images/icons/current-location.png", // Link for the icon
         }),
     });
 
