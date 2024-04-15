@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 
-const DelayedInput = ({ onTypingEnd, placeHolder }) => {
-    const [inputValue, setInputValue] = useState("");
+const DelayedInput = ({ onTypingEnd, placeHolder, value, setValue }) => {
     const [typingTimeout, setTypingTimeout] = useState(null);
 
     const handleInputChange = (e) => {
         const newValue = e.target.value;
-        setInputValue(newValue);
+        setValue(newValue);
 
         // Clear the previous timeout, if there is one
         if (typingTimeout) clearTimeout(typingTimeout);
@@ -33,11 +32,11 @@ const DelayedInput = ({ onTypingEnd, placeHolder }) => {
                 borderRadius: "8px",
                 zIndex: "1",
                 width: "85%",
-                height: "20px",
+                height: "48px",
             }}
             type="text"
             placeholder={placeHolder}
-            value={inputValue}
+            value={value}
             onChange={handleInputChange}
         />
     );

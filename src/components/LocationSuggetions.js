@@ -1,10 +1,23 @@
 import React from "react";
 import { markSearchedLocation } from "../utils/MarkSearchedLocation";
 
-const LocationSuggetions = ({ Map, Locations, setLocations }) => {
-    const locationClickHandler = (map, lon, lat) => {
-        markSearchedLocation(map, lon, lat);
-        setLocations([])
+const LocationSuggetions = ({
+    Map,
+    setLocation,
+    setLocationDisplayName,
+    Locations,
+    setLocations,
+    DirectionSearchEnabled,
+}) => {
+    const locationClickHandler = (map, location, lon, lat) => {
+        setLocation(location);
+        setLocationDisplayName(location.display_name)
+        
+        if (!DirectionSearchEnabled) {
+            markSearchedLocation(map, lon, lat);
+        }
+
+        setLocations([]);
     };
 
     return (
@@ -13,11 +26,11 @@ const LocationSuggetions = ({ Map, Locations, setLocations }) => {
                 textAlign: "left",
                 backgroundColor: "white",
                 padding: "10px 20px",
+                borderRadius: "8px",
             }}
         >
             <ul style={{ padding: 0 }}>
                 {Locations.map((location) => {
-                    console.log(location);
                     return (
                         <li
                             key={location.place_id}
@@ -31,6 +44,7 @@ const LocationSuggetions = ({ Map, Locations, setLocations }) => {
                             onClick={() =>
                                 locationClickHandler(
                                     Map,
+                                    location,
                                     location.lon,
                                     location.lat
                                 )

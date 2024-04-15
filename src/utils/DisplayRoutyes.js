@@ -3,43 +3,58 @@ import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import { Feature } from "ol";
 import { Style, Stroke } from "ol/style";
+import Point from "ol/geom/Point";
+import { Fill, Circle, Text } from "ol/style";
 
-async function getRoute(fromLat, fromLon, toLat, toLon, date, time) {
-    const baseUrl = "http://localhost:8080/otp/routers/default/plan";
-    const query = new URLSearchParams({
-        fromPlace: `${fromLat},${fromLon}`,
-        toPlace: `${toLat},${toLon}`,
-        mode: "BICYCLE,TRANSIT",
-        date: date, // format: "MM-DD-YYYY"
-        time: time, // format: "HH:mm:ss" (24-hour format)
+function createMarker(lat, lon, color, text) {
+    const pointGeom = new Point([lon, lat]).transform("EPSG:4326", "EPSG:3857");
+    const markerFeature = new Feature(pointGeom);
+
+    // Directly create and set the style for the feature
+    const markerStyle = new Style({
+        image: new Circle({
+            radius: 7,
+            fill: new Fill({ color: color }), // Ensure this color is applied
+        }),
+        text: new Text({
+            text: text,
+            offsetY: -15,
+            fill: new Fill({ color: "#000" }),
+            font: "14px Arial",
+        }),
     });
 
-    try {
-        const response = await fetch(`${baseUrl}?${query}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        return data.plan.itineraries[1];
-    } catch (error) {
-        console.error("Error fetching the route:", error);
-        return null; // or you could return an error message or some error code
-    }
+    // Set the style on the feature
+    markerFeature.setStyle(markerStyle);
+
+    return markerFeature;
 }
 
+// Global variable to hold the current direction layer
+let directionLayer = null;
+
 export const displayRoute = async (
+    Legs,
     map,
     fromLat,
     fromLon,
     toLat,
-    toLon,
-    date,
-    time
+    toLon
 ) => {
-    const route = await getRoute(fromLat, fromLon, toLat, toLon, date, time);
+    // Remove the existing direction layer if it exists
+    if (directionLayer) {
+        map.removeLayer(directionLayer);
+        directionLayer = null;
+    }
 
-    if (route) {
-        route.legs.forEach((leg) => {
+    if (Legs) {
+        const features = [];
+        // Add start and destination markers
+        const startMarker = createMarker(fromLat, fromLon, "green", "Start");
+        const destinationMarker = createMarker(toLat, toLon, "red", "End");
+        features.push(startMarker, destinationMarker);
+
+        Legs.forEach((leg) => {
             const legGeometry = new Polyline().readGeometry(
                 leg.legGeometry.points,
                 {
@@ -54,37 +69,49 @@ export const displayRoute = async (
             });
 
             let color;
+            let dashed;
             switch (leg.mode) {
                 case "BICYCLE":
-                    color = "#0000FF"; // Blue for bicycle segments
+                    color = "#0000FF";
+                    dashed = [3, 9];
                     break;
                 case "BUS":
+                    color = leg.routeColor ? "#" + leg.routeColor : "#dc143c";
+                    dashed = [0, 0];
+                    break;
                 case "TRAM":
+                    color = leg.routeColor ? "#" + leg.routeColor : "#dc143c";
+                    dashed = [0, 0];
+                    break;
                 case "RAIL":
-                    color = "#FF0000"; // Red for transit segments
+                    color = leg.routeColor ? "#" + leg.routeColor : "#dc143c";
+                    dashed = [0, 0];
                     break;
                 default:
-                    color = "#00FF00"; // Some other color for different modes (WALK)
+                    dashed = [0, 0];
+                    color = "#00FF00"; // Some other color for different modes (e.g., WALK)
             }
 
             const style = new Style({
                 stroke: new Stroke({
                     color: color,
                     width: 6,
+                    lineDash: dashed,
                 }),
             });
 
             feature.setStyle(style);
-
-            const vectorSource = new VectorSource({
-                features: [feature],
-            });
-
-            const vectorLayer = new VectorLayer({
-                source: vectorSource,
-            });
-
-            map.addLayer(vectorLayer);
+            features.push(feature);
         });
+
+        const vectorSource = new VectorSource({
+            features: features,
+        });
+
+        directionLayer = new VectorLayer({
+            source: vectorSource,
+        });
+
+        map.addLayer(directionLayer);
     }
 };

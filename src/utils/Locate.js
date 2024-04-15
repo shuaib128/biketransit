@@ -18,7 +18,7 @@ export const locate = (map) => {
                     map.setView(
                         new View({
                             center: olCoords,
-                            zoom: 18, // Closer zoom to see the location clearly
+                            zoom: 13, // Closer zoom to see the location clearly
                         })
                     );
 
