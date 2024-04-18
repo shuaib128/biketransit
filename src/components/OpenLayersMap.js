@@ -1,13 +1,19 @@
+import {
+    IconButton,
+    Button,
+    Icon,
+    ScaleFade,
+    useDisclosure,
+} from "@chakra-ui/react";
 import React, { useState, useEffect, useRef } from "react";
 import "ol/ol.css";
+import { defaults as defaultControls } from "ol/control";
 import Map from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
 import OSM from "ol/source/OSM";
 import { locate } from "../utils/Locate";
 import { pinpoint } from "../utils/LocationMarker";
-import { IconButton, Button } from "@chakra-ui/react";
-import { Icon } from "@chakra-ui/react";
 import { MdMyLocation, MdDirections } from "react-icons/md";
 import { locationSuggetionSearch } from "../utils/LocationSuggetionSearch";
 import DelayedInput from "./DelayedInput";
@@ -19,6 +25,7 @@ import LocationSkeleton from "../utils/skeletion/LocationSkeleton";
 import RouteSkeletion from "../utils/skeletion/RouteSkeletion";
 
 const OpenLayersMap = () => {
+    const { isOpen, onToggle, onClose } = useDisclosure();
     const [map, setmap] = useState(null);
     const [Locations, setLocations] = useState([]);
     const [LocationsDestination, setLocationsDestination] = useState([]);
@@ -98,9 +105,7 @@ const OpenLayersMap = () => {
     }, [StartLocation, DestinationLocation, date, time]);
 
     useEffect(() => {
-        console.log("haha");
         setRoutes([]);
-        setLoadingRoutes(false);
     }, [StartLocationDisplayName, DestinationLocationDisplayName]);
 
     useEffect(() => {
@@ -119,6 +124,7 @@ const OpenLayersMap = () => {
                     source: new OSM(),
                 }),
             ],
+            controls: defaultControls({ zoom: false }),
             view: new View({
                 center: [0, 0], // Will be updated
                 zoom: 2, // Initial zoom level
@@ -168,6 +174,8 @@ const OpenLayersMap = () => {
                         lon: lon,
                         display_name: "Your Location",
                     });
+
+                    setStartLocationDisplayName("Your location")
                 },
                 (error) => {
                     // Handle error
@@ -204,183 +212,211 @@ const OpenLayersMap = () => {
             DestinationLocation.lat,
             DestinationLocation.lon
         );
+
+        onClose(); //Close to direction pannel
     };
 
     return (
         <div>
-            <div
+            <Button
                 style={{
-                    marginTop: "10px",
                     position: "fixed",
-                    top: -1,
-                    left: 40,
+                    top: 11,
+                    left: 10,
                     borderRadius: "8px",
                     zIndex: "1",
-                    width: "300px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: "5px",
                 }}
+                onClick={onToggle}
             >
-                <DelayedInput
-                    onTypingEnd={handleTypingEnd}
-                    placeHolder={
-                        !EnableDirectionSearch
-                            ? "Search Locations"
-                            : "Start point"
-                    }
-                    value={StartLocationDisplayName}
-                    setValue={setStartLocationDisplayName}
-                />
-
-                <IconButton
-                    style={{
-                        marginTop: "0px",
-                        padding: "5px",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        width: "15%",
-                    }}
-                    size="lg"
-                    fontSize="25px"
-                    onClick={locateAndPinpoint}
-                    colorScheme="blue"
-                    aria-label="Search database"
-                    icon={<Icon as={MdDirections} />}
-                    onClickCapture={() =>
-                        setEnableDirectionSearch(!EnableDirectionSearch)
-                    }
-                />
-            </div>
-
-            {EnableDirectionSearch ? (
+                {isOpen ? "Close" : "Open"}
+            </Button>
+            <ScaleFade initialScale={0.9} in={isOpen}>
                 <div
                     style={{
+                        marginTop: "10px",
                         position: "fixed",
-                        top: 59,
-                        left: 18,
+                        top: 49,
+                        left: 10,
                         borderRadius: "8px",
                         zIndex: "1",
-                        width: "439px",
+                        width: "300px",
                         display: "flex",
-                        alignItems: "end",
+                        justifyContent: "space-between",
+                        gap: "5px",
                     }}
                 >
-                    <div style={{ width: "70%" }}>
-                        <Button
-                            onClick={locateAndSetAsStartDirrection}
-                            colorScheme="teal"
-                            variant="link"
-                            display="flex"
-                            marginLeft="24px"
-                            marginBottom="14px"
-                        >
-                            Your Location
-                        </Button>
-                        <DelayedInput
-                            onTypingEnd={handleTypingEndDestination}
-                            placeHolder="Search Destination"
-                            value={DestinationLocationDisplayName}
-                            setValue={setDestinationLocationDisplayName}
-                        />
-                    </div>
-
-                    <div style={{ width: "30%" }}>
-                        <input
-                            type="date"
-                            value={date}
-                            onChange={handleDateChange}
-                        />
-                        <input
-                            type="time"
-                            value={time}
-                            onChange={handleTimeChange}
-                        />
-                    </div>
-                </div>
-            ) : (
-                <div></div>
-            )}
-            <div
-                style={{
-                    marginTop: "10px",
-                    position: "fixed",
-                    top: 52,
-                    left: 40,
-                    borderRadius: "8px",
-                    width: "333px",
-                    zIndex: "1",
-                }}
-            >
-                <>
-                    {LoadingLocation ? (
-                        <LocationSkeleton /> // Display this when locations are loading
-                    ) : Locations.length ? (
-                        <LocationSuggetions
-                            Map={map}
-                            setLocation={setStartLocation}
-                            setLocationDisplayName={setStartLocationDisplayName}
-                            Locations={Locations}
-                            setLocations={setLocations}
-                            DirectionSearchEnabled={EnableDirectionSearch}
-                        />
-                    ) : (
-                        <div></div> // Display this when there are no locations and not loading
-                    )}
-                </>
-            </div>
-
-            <div
-                style={{
-                    marginTop: "10px",
-                    position: "fixed",
-                    top: 140,
-                    left: 40,
-                    borderRadius: "8px",
-                    width: "333px",
-                    zIndex: "1",
-                }}
-            >
-                <>
-                    {LocationsDestination.length ? (
-                        <LocationSuggetions
-                            Map={map}
-                            setLocation={setDestinationLocation}
-                            setLocationDisplayName={
-                                setDestinationLocationDisplayName
-                            }
-                            Locations={LocationsDestination}
-                            setLocations={setLocationsDestination}
-                            DirectionSearchEnabled={EnableDirectionSearch}
-                        />
-                    ) : (
-                        <div></div>
-                    )}
-                </>
-            </div>
-
-            <div
-                style={{
-                    marginTop: "10px",
-                    position: "fixed",
-                    top: 140,
-                    left: 18,
-                    borderRadius: "8px",
-                    width: "350px",
-                    zIndex: "1",
-                }}
-            >
-                {LoadingRoutes ? (
-                    <RouteSkeletion /> // Display this while loading
-                ) : Routes.length ? (
-                    <RouteOptions
-                        Routes={Routes}
-                        markDirectionHandler={markDirection}
+                    <DelayedInput
+                        onTypingEnd={handleTypingEnd}
+                        placeHolder={
+                            !EnableDirectionSearch
+                                ? "Search Locations"
+                                : "Start point"
+                        }
+                        value={StartLocationDisplayName}
+                        setValue={setStartLocationDisplayName}
                     />
+
+                    <IconButton
+                        style={{
+                            marginTop: "0px",
+                            padding: "5px",
+                            borderRadius: "8px",
+                            cursor: "pointer",
+                            width: "15%",
+                        }}
+                        size="lg"
+                        fontSize="25px"
+                        onClick={locateAndPinpoint}
+                        colorScheme="blue"
+                        aria-label="Search database"
+                        icon={<Icon as={MdDirections} />}
+                        onClickCapture={() =>
+                            setEnableDirectionSearch(!EnableDirectionSearch)
+                        }
+                    />
+                </div>
+
+                {EnableDirectionSearch ? (
+                    <div
+                        style={{
+                            position: "fixed",
+                            top: 110,
+                            left: 18,
+                            borderRadius: "8px",
+                            zIndex: "1",
+                            width: "439px",
+                            display: "block",
+                            alignItems: "end",
+                        }}
+                    >
+                        <div
+                            style={{
+                                width: "70%",
+                                display: "flex",
+                                flexWrap: "wrap",
+                            }}
+                        >
+                            <Button
+                                onClick={locateAndSetAsStartDirrection}
+                                colorScheme="teal"
+                                variant="link"
+                                display="flex"
+                                marginBottom="14px"
+                            >
+                                Your Location
+                            </Button>
+                            <DelayedInput
+                                onTypingEnd={handleTypingEndDestination}
+                                placeHolder="Search Destination"
+                                value={DestinationLocationDisplayName}
+                                setValue={setDestinationLocationDisplayName}
+                            />
+                        </div>
+
+                        <div
+                            style={{
+                                width: "30%",
+                                marginTop: "10px",
+                            }}
+                        >
+                            <input
+                                type="date"
+                                value={date}
+                                onChange={handleDateChange}
+                            />
+                            <input
+                                type="time"
+                                value={time}
+                                onChange={handleTimeChange}
+                            />
+                        </div>
+                    </div>
                 ) : (
-                    <div></div> // Display this if there are no routes
+                    <div></div>
                 )}
-            </div>
+                <div
+                    style={{
+                        marginTop: "10px",
+                        position: "fixed",
+                        top: 105,
+                        left: 10,
+                        borderRadius: "8px",
+                        width: "333px",
+                        zIndex: "1",
+                    }}
+                >
+                    <>
+                        {LoadingLocation ? (
+                            <LocationSkeleton /> // Display this when locations are loading
+                        ) : Locations.length ? (
+                            <LocationSuggetions
+                                Map={map}
+                                setLocation={setStartLocation}
+                                setLocationDisplayName={
+                                    setStartLocationDisplayName
+                                }
+                                Locations={Locations}
+                                setLocations={setLocations}
+                                DirectionSearchEnabled={EnableDirectionSearch}
+                            />
+                        ) : (
+                            <div></div> // Display this when there are no locations and not loading
+                        )}
+                    </>
+                </div>
+
+                <div
+                    style={{
+                        marginTop: "10px",
+                        position: "fixed",
+                        top: 191,
+                        left: 10,
+                        borderRadius: "8px",
+                        width: "333px",
+                        zIndex: "1",
+                    }}
+                >
+                    <>
+                        {LocationsDestination.length ? (
+                            <LocationSuggetions
+                                Map={map}
+                                setLocation={setDestinationLocation}
+                                setLocationDisplayName={
+                                    setDestinationLocationDisplayName
+                                }
+                                Locations={LocationsDestination}
+                                setLocations={setLocationsDestination}
+                                DirectionSearchEnabled={EnableDirectionSearch}
+                            />
+                        ) : (
+                            <div></div>
+                        )}
+                    </>
+                </div>
+
+                <div
+                    style={{
+                        marginTop: "10px",
+                        position: "fixed",
+                        top: 253,
+                        left: 18,
+                        borderRadius: "8px",
+                        width: "350px",
+                        zIndex: "1",
+                    }}
+                >
+                    {LoadingRoutes ? (
+                        <RouteSkeletion /> // Display this while loading
+                    ) : Routes.length ? (
+                        <RouteOptions
+                            Routes={Routes}
+                            markDirectionHandler={markDirection}
+                        />
+                    ) : (
+                        <div></div> // Display this if there are no routes
+                    )}
+                </div>
+            </ScaleFade>
 
             <div
                 onClick={() => handleMapClik()}

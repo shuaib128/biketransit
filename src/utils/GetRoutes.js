@@ -1,5 +1,7 @@
+import { BackendLink } from "./BackLink";
+
 export async function getRoutes(fromLat, fromLon, toLat, toLon, date, time) {
-    const baseUrl = "https://horrible-distribution-production.up.railway.app/otp/routers/default/plan";
+    const baseUrl = BackendLink + "/otp/routers/default/plan";
     const query = new URLSearchParams({
         fromPlace: `${fromLat},${fromLon}`,
         toPlace: `${toLat},${toLon}`,
@@ -10,7 +12,7 @@ export async function getRoutes(fromLat, fromLon, toLat, toLon, date, time) {
 
     try {
         const response = await fetch(`${baseUrl}?${query}`);
-        console.log(response)
+        console.log(response);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
