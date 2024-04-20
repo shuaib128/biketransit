@@ -52,9 +52,22 @@ const RouteOptions = ({ Routes, markDirectionHandler }) => {
                     .sort((a, b) => a.duration - b.duration)
                     .map((route, index) => {
                         //Calculate the fare
-                        let fare = (
-                            route.fare.fare.regular.cents / 100
-                        ).toFixed(2);
+                        let fare;
+                        if (
+                            route &&
+                            route.fare &&
+                            route.fare.fare &&
+                            route.fare.fare.regular &&
+                            route.fare.fare.regular.cents
+                        ) {
+                            fare = (
+                                route.fare.fare.regular.cents / 100
+                            ).toFixed(2);
+                        } else {
+                            console.error("One of the properties is undefined");
+                            // Handle the error appropriately, possibly assigning a default value
+                            fare = "0.00";
+                        }
 
                         // Calculate the total bike time
                         let bikingDuration = 0;
@@ -119,7 +132,7 @@ const RouteOptions = ({ Routes, markDirectionHandler }) => {
                                         marginLeft: "20px",
                                         display: "flex",
                                         alignItems: "center",
-                                        gap: "13px"
+                                        gap: "13px",
                                     }}
                                 >
                                     <p>${fare}</p>
