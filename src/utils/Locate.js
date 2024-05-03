@@ -8,7 +8,7 @@ export const locate = (map) => {
     // Return a new Promise
     return new Promise((resolve, reject) => {
         if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(
+            navigator.geolocation.watchPosition(
                 (position) => {
                     const coords = [
                         position.coords.longitude,
